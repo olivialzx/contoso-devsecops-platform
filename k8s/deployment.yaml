@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: contoso-app
+  namespace: contoso-devsecops
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: contoso-app
+  template:
+    metadata:
+      labels:
+        app: contoso-app
+    spec:
+      containers:
+        - name: contoso-app
+          image: acrcontosodevsecops.azurecr.io/contoso-devsecops:1.0.1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+
+          envFrom:
+            - configMapRef:
+                name: contoso-config
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
